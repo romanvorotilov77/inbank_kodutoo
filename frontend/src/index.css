@@ -1,1 +1,109 @@
-@import "tailwindcss";
+:root {
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	color: #10253b;
+	background: radial-gradient(circle at top, #f9fcff 0%, #e9f2fb 45%, #d6e6f5 100%);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+}
+
+#root {
+	min-height: 100vh;
+}
+
+.page {
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+	padding: 2rem 1rem;
+}
+
+.card {
+	width: min(680px, 100%);
+	background: #ffffff;
+	border-radius: 16px;
+	box-shadow: 0 20px 50px rgba(15, 30, 60, 0.15);
+	padding: 1.5rem;
+}
+
+h1 {
+	margin: 0 0 0.35rem;
+	font-size: 1.7rem;
+}
+
+.subtitle {
+	margin: 0 0 1.2rem;
+	color: #4a617a;
+}
+
+.form {
+	display: grid;
+	gap: 0.9rem;
+}
+
+label {
+	display: grid;
+	gap: 0.3rem;
+	font-weight: 600;
+}
+
+input,
+select,
+button {
+	width: 100%;
+	border-radius: 10px;
+	border: 1px solid #b7c7d8;
+	padding: 0.65rem 0.8rem;
+	font-size: 1rem;
+}
+
+button {
+	border: none;
+	background: #004f9f;
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+button:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.endpoint {
+	margin-top: 1rem;
+	font-size: 0.92rem;
+	color: #4a617a;
+}
+
+.result {
+	margin-top: 1rem;
+	border-radius: 10px;
+	padding: 0.8rem;
+	font-weight: 600;
+}
+
+.approved {
+	background: #def7e8;
+	border: 1px solid #6fca92;
+}
+
+.rejected {
+	background: #fde6e6;
+	border: 1px solid #e18a8a;
+}
+
+.error {
+	margin-top: 1rem;
+	border: 1px solid #e18a8a;
+	background: #fde6e6;
+	color: #7f1e1e;
+	border-radius: 10px;
+	padding: 0.8rem;
+}
