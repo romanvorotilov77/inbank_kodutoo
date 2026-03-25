@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 
 type LoanRequest = {
@@ -12,27 +12,55 @@ type LoanResponse = {
   approvedAmount: number
 }
 
-const EXAMPLE_CODES = [
-  { value: '49002010965', label: '49002010965 (debt)' },
-  { value: '49002010976', label: '49002010976 (segment 1, 100)' },
-  { value: '49002010987', label: '49002010987 (segment 2, 300)' },
-  { value: '49002010998', label: '49002010998 (segment 3, 1000)' },
-]
+type SampleCode = {
+  personalCode: string
+  label: string
+}
 
 function App() {
   const [form, setForm] = useState<LoanRequest>({
-    personalCode: '49002010987',
+    personalCode: '',
     amount: 4000,
     loanPeriod: 24,
   })
+  const [sampleCodes, setSampleCodes] = useState<SampleCode[]>([])
   const [result, setResult] = useState<LoanResponse | null>(null)
   const [error, setError] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
 
   const endpoint = useMemo(() => '/api/loan/decision', [])
+  const sampleCodesEndpoint = useMemo(() => '/api/loan/sample-codes', [])
+
+  useEffect(() => {
+    async function loadSampleCodes() {
+      try {
+        const response = await fetch(sampleCodesEndpoint)
+        if (!response.ok) {
+          throw new Error(`Failed to load sample codes (${response.status})`)
+        }
+
+        const data = (await response.json()) as SampleCode[]
+        setSampleCodes(data)
+
+        if (data.length > 0) {
+          setForm((prev) => ({ ...prev, personalCode: data[0].personalCode }))
+        }
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : 'Failed to load sample data')
+      }
+    }
+
+    void loadSampleCodes()
+  }, [sampleCodesEndpoint])
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (!form.personalCode) {
+      setError('Please select a personal code')
+      return
+    }
+
     setError('')
     setResult(null)
     setIsLoading(true)
@@ -73,8 +101,11 @@ function App() {
               value={form.personalCode}
               onChange={(e) => setForm({ ...form, personalCode: e.target.value })}
             >
-              {EXAMPLE_CODES.map((item) => (
-                <option key={item.value} value={item.value}>
+              <option value="" disabled>
+                Select a sample code
+              </option>
+              {sampleCodes.map((item) => (
+                <option key={item.personalCode} value={item.personalCode}>
                   {item.label}
                 </option>
               ))}
