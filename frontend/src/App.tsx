@@ -1,21 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-
-type LoanRequest = {
-  personalCode: string
-  amount: number
-  loanPeriod: number
-}
-
-type LoanResponse = {
-  isApproved: boolean
-  approvedAmount: number
-}
-
-type SampleCode = {
-  personalCode: string
-  label: string
-}
+import type { LoanRequest, LoanResponse, SampleCode } from './types/loan'
 
 function App() {
   const [form, setForm] = useState<LoanRequest>({
