@@ -3,26 +3,34 @@ import LoanForm from './components/ui/LoanForm'
 import LoanResult from './components/ui/LoanResult'
 import ErrorMessage from './components/ui/ErrorMessage'
 import { useLoanDecision } from './hooks/useLoanDecision'
-import { ui } from './styles/uiClasses'
+import ScorePreview from './components/ui/ScorePreview'
 
 function App() {
-  const { endpoint, form, setForm, sampleCodes, constraints, result, error, isLoading, onSubmit } =
-    useLoanDecision()
+  const {
+    form,
+    setForm,
+    sampleCodes,
+    constraints,
+    constraintsLoading,
+    result,
+    error,
+    isLoading,
+    liveScore,
+    onSubmit,
+  } = useLoanDecision()
 
   return (
     <AppShell title="Loan Decision Demo" subtitle="Simple front-end for the single API endpoint.">
-
       <LoanForm
         form={form}
         sampleCodes={sampleCodes}
         constraints={constraints}
         isLoading={isLoading}
+        constraintsLoading={constraintsLoading}
         onSubmit={onSubmit}
         onFormChange={setForm}
       />
-
-      <div className={ui.endpoint}>Endpoint: {endpoint}</div>
-
+      <ScorePreview score={liveScore} />
       <LoanResult result={result} />
       <ErrorMessage message={error} />
     </AppShell>
@@ -30,3 +38,4 @@ function App() {
 }
 
 export default App
+

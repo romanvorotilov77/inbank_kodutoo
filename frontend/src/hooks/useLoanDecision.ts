@@ -1,8 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import type { LoanConstraints, LoanRequest, LoanResponse, SampleCode } from '../types/loan'
-import { evaluateLoan, LOAN_DECISION_ENDPOINT } from '../api/loanApi'
-import { DEMO_LOAN_CONSTRAINTS, DEMO_SAMPLE_CODES } from '../config/demoData'
+import { evaluateLoan, getConstraints, getPreviewScore } from '../api/loanApi'
+import { DEMO_SAMPLE_CODES } from '../config/demoData'
+
+const sampleCodes: SampleCode[] = DEMO_SAMPLE_CODES
+
+const FALLBACK_CONSTRAINTS: LoanConstraints = {
+  minAmount: 2000,
+  maxAmount: 10000,
+  minPeriod: 12,
+  maxPeriod: 60,
+}
 
 export function useLoanDecision() {
   const [form, setForm] = useState<LoanRequest>({
@@ -10,16 +19,48 @@ export function useLoanDecision() {
     amount: 4000,
     loanPeriod: 24,
   })
-  const [sampleCodes] = useState<SampleCode[]>(DEMO_SAMPLE_CODES)
-  const [constraints] = useState<LoanConstraints>(DEMO_LOAN_CONSTRAINTS)
+  const [constraints, setConstraints] = useState<LoanConstraints>(FALLBACK_CONSTRAINTS)
+  const [constraintsLoading, setConstraintsLoading] = useState(true)
   const [result, setResult] = useState<LoanResponse | null>(null)
   const [error, setError] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
+  const [liveScore, setLiveScore] = useState<number | null>(null)
+
+  // Fetch constraints from API on mount
+  useEffect(() => {
+    let cancelled = false
+    getConstraints()
+      .then((data) => {
+        if (!cancelled) {
+          setConstraints(data)
+          setConstraintsLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setConstraintsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Debounced live credit score preview
+  useEffect(() => {
+    if (!form.personalCode || form.amount <= 0 || form.loanPeriod <= 0) {
+      setLiveScore(null)
+      return
+    }
+    const timer = setTimeout(() => {
+      getPreviewScore(form.personalCode, form.amount, form.loanPeriod)
+        .then((data) => setLiveScore(data.creditScore))
+        .catch(() => setLiveScore(null))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [form.personalCode, form.amount, form.loanPeriod])
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    // Always start a new submission cycle with a clean message state.
     setError('')
     setResult(null)
 
@@ -44,7 +85,9 @@ export function useLoanDecision() {
     }
 
     if (form.loanPeriod < constraints.minPeriod || form.loanPeriod > constraints.maxPeriod) {
-      setError(`Loan period must be between ${constraints.minPeriod} and ${constraints.maxPeriod} months`)
+      setError(
+        `Loan period must be between ${constraints.minPeriod} and ${constraints.maxPeriod} months`,
+      )
       return
     }
 
@@ -61,14 +104,15 @@ export function useLoanDecision() {
   }
 
   return {
-    endpoint: LOAN_DECISION_ENDPOINT,
     form,
     setForm,
     sampleCodes,
     constraints,
+    constraintsLoading,
     result,
     error,
     isLoading,
+    liveScore,
     onSubmit,
   }
 }

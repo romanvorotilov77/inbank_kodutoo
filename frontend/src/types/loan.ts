@@ -6,7 +6,9 @@ export type LoanRequest = {
 
 export type LoanResponse = {
   isApproved: boolean
-  approvedAmount: number
+  approvedAmount: number | null
+  approvedPeriod: number | null
+  approvedCreditScore: number | null
 }
 
 export type SampleCode = {
@@ -19,4 +21,8 @@ export type LoanConstraints = {
   maxAmount: number
   minPeriod: number
   maxPeriod: number
+}
+
+export type PreviewResponse = {
+  creditScore: number | null
 }

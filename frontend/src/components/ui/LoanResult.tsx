@@ -6,16 +6,21 @@ type LoanResultProps = {
 }
 
 function LoanResult({ result }: LoanResultProps) {
-  if (!result) {
-    return null
-  }
+  if (!result) return null
 
   const statusClasses = result.isApproved ? ui.resultApproved : ui.resultRejected
 
   return (
     <div className={`${ui.resultBase} ${statusClasses}`}>
       <div>Decision: {result.isApproved ? 'Approved' : 'Rejected'}</div>
-      <div className="mt-1">Approved Amount: {result.approvedAmount} EUR</div>
+      {result.isApproved && result.approvedAmount !== null && (
+        <div className={ui.resultRow}>
+          Approved Amount: {result.approvedAmount} EUR
+          {result.approvedPeriod !== null && (
+            <span> — for a period of {result.approvedPeriod} months</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

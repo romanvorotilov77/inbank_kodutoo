@@ -14,111 +14,78 @@ namespace backend.Services
 
         public LoanResponse EvaluateLoan(LoanRequest request)
         {
-            if(request == null)
-            {
+            if (request == null)
                 throw new ArgumentNullException(nameof(request));
-            }
-            
-            if(request.LoanPeriod < LoanConstraints.MinPeriod || request.LoanPeriod > LoanConstraints.MaxPeriod)
-            {
+
+            if (request.LoanPeriod < LoanConstraints.MinPeriod || request.LoanPeriod > LoanConstraints.MaxPeriod)
                 return SendRejectResponse();
-            }
-            
-            if(request.Amount > LoanConstraints.MaxAmount || request.Amount < LoanConstraints.MinAmount)
-            {
+
+            if (request.Amount < LoanConstraints.MinAmount || request.Amount > LoanConstraints.MaxAmount)
                 return SendRejectResponse();
-            }
-            
-            if(_userService.HasDebt(request.PersonalCode))
-            {
+
+            if (_userService.HasDebt(request.PersonalCode))
                 return SendRejectResponse();
-            }
-            
+
             int? creditModifier = _userService.GetCreditModifier(request.PersonalCode);
-            if(!creditModifier.HasValue)
-            {
+            if (!creditModifier.HasValue)
                 return SendRejectResponse();
-            }
-            
-            int? maxApprovedAmount = FindMaxApprovedAmount(creditModifier.Value, request.LoanPeriod);
-            
-            if(maxApprovedAmount.HasValue)
+
+            decimal? maxApprovedAmount = FindMaxApprovedAmount(creditModifier.Value, request.LoanPeriod);
+
+            if (maxApprovedAmount.HasValue)
             {
-                return SendApproveResponse(maxApprovedAmount.Value);
+                double score = CalculateCreditScore(creditModifier.Value, maxApprovedAmount.Value, request.LoanPeriod);
+                return SendApproveResponse(maxApprovedAmount.Value, null, score);
             }
-            
-            int? alternativeAmount = FindMaxApprovedAmountWithAlternativePeriod(creditModifier.Value, request.Amount);
-            
-            if(alternativeAmount.HasValue)
+
+            var alternative = FindMaxApprovedAmountWithAlternativePeriod(creditModifier.Value, request.LoanPeriod);
+
+            if (alternative.HasValue)
             {
-                return SendApproveResponse(alternativeAmount.Value);
+                double score = CalculateCreditScore(creditModifier.Value, alternative.Value.Amount, alternative.Value.Period);
+                return SendApproveResponse(alternative.Value.Amount, alternative.Value.Period, score);
             }
-            
+
             return SendRejectResponse();
         }
 
-        private int? FindMaxApprovedAmount(int creditModifier, int loanPeriod)
+        public double? CalculatePreviewScore(string personalCode, decimal amount, int period)
         {
-            // Start from maxAmount and go down to find the highest amount with score >= 1
-            for(int amount = LoanConstraints.MaxAmount; amount >= LoanConstraints.MinAmount; amount -= 100)
+            if (_userService.HasDebt(personalCode))
+                return null;
+
+            int? creditModifier = _userService.GetCreditModifier(personalCode);
+            if (!creditModifier.HasValue || amount <= 0)
+                return null;
+
+            return CalculateCreditScore(creditModifier.Value, amount, period);
+        }
+
+        private static decimal? FindMaxApprovedAmount(int creditModifier, int loanPeriod)
+        {
+            decimal max = Math.Min((decimal)creditModifier * loanPeriod, LoanConstraints.MaxAmount);
+            return max >= LoanConstraints.MinAmount ? max : null;
+        }
+
+        private static (decimal Amount, int Period)? FindMaxApprovedAmountWithAlternativePeriod(
+            int creditModifier, int requestedPeriod)
+        {
+            for (int period = requestedPeriod + 1; period <= LoanConstraints.MaxPeriod; period++)
             {
-                if(CalculateCreditScore(creditModifier, amount, loanPeriod) >= 1)
-                {
-                    return amount;
-                }
+                decimal? max = FindMaxApprovedAmount(creditModifier, period);
+                if (max.HasValue)
+                    return (max.Value, period);
             }
-            
-            for(int amount = LoanConstraints.MaxAmount; amount >= LoanConstraints.MinAmount; amount--)
-            {
-                if(CalculateCreditScore(creditModifier, amount, loanPeriod) >= 1)
-                {
-                    return amount;
-                }
-            }
-            
             return null;
         }
 
-        private int? FindMaxApprovedAmountWithAlternativePeriod(int creditModifier, int requestedAmount)
-        {
-            // Try periods from maximum to minimum to find a suitable one
-            for(int period = LoanConstraints.MaxPeriod; period >= LoanConstraints.MinPeriod; period--)
-            {
-                // For each period, find the max approvable amount
-                int? maxApproved = FindMaxApprovedAmount(creditModifier, period);
-                
-                if(maxApproved.HasValue)
-                {
-                    return maxApproved.Value;
-                }
-            }
-            
-            return null;
-        }
+        private static double CalculateCreditScore(int creditModifier, decimal loanAmount, int loanPeriod) =>
+            ((double)creditModifier / (double)loanAmount) * loanPeriod;
 
-        private double CalculateCreditScore(int creditModifier, int loanAmount, int loanPeriod)
-        {
-            return ((double)creditModifier / loanAmount) * loanPeriod;
-        }
+        private static LoanResponse SendRejectResponse() =>
+            new() { IsApproved = false };
 
-        private LoanResponse SendRejectResponse()
-        {
-            return new LoanResponse
-            {
-                IsApproved = false,
-                ApprovedAmount = 0
-            };
-        }
-
-        private LoanResponse SendApproveResponse(int approvedAmount)
-        {
-            return new LoanResponse
-            {
-                IsApproved = true,
-                ApprovedAmount = approvedAmount
-            };
-        }
+        private static LoanResponse SendApproveResponse(decimal amount, int? period, double score) =>
+            new() { IsApproved = true, ApprovedAmount = amount, ApprovedPeriod = period, ApprovedCreditScore = score };
     }
 }
-
-
