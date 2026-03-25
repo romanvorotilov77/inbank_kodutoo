@@ -1,32 +1,31 @@
-import LoanForm from './components/LoanForm'
-import LoanResult from './components/LoanResult'
-import ErrorMessage from './components/ErrorMessage'
+import AppShell from './components/layout/AppShell'
+import LoanForm from './components/ui/LoanForm'
+import LoanResult from './components/ui/LoanResult'
+import ErrorMessage from './components/ui/ErrorMessage'
 import { useLoanDecision } from './hooks/useLoanDecision'
+import { ui } from './styles/uiClasses'
 
 function App() {
-  const { endpoint, form, setForm, sampleCodes, result, error, isLoading, onSubmit } =
+  const { endpoint, form, setForm, sampleCodes, constraints, result, error, isLoading, onSubmit } =
     useLoanDecision()
 
   return (
-    <main className="page">
-      <section className="card">
-        <h1>Loan Decision Demo</h1>
-        <p className="subtitle">Simple front-end for the single API endpoint.</p>
+    <AppShell title="Loan Decision Demo" subtitle="Simple front-end for the single API endpoint.">
 
-        <LoanForm
-          form={form}
-          sampleCodes={sampleCodes}
-          isLoading={isLoading}
-          onSubmit={onSubmit}
-          onFormChange={setForm}
-        />
+      <LoanForm
+        form={form}
+        sampleCodes={sampleCodes}
+        constraints={constraints}
+        isLoading={isLoading}
+        onSubmit={onSubmit}
+        onFormChange={setForm}
+      />
 
-        <div className="endpoint">Endpoint: {endpoint}</div>
+      <div className={ui.endpoint}>Endpoint: {endpoint}</div>
 
-        <LoanResult result={result} />
-        <ErrorMessage message={error} />
-      </section>
-    </main>
+      <LoanResult result={result} />
+      <ErrorMessage message={error} />
+    </AppShell>
   )
 }
 

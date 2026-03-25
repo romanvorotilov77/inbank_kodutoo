@@ -1,20 +1,23 @@
 import type { FormEvent } from 'react'
-import type { LoanRequest, SampleCode } from '../types/loan'
+import type { LoanConstraints, LoanRequest, SampleCode } from '../../types/loan'
+import { ui } from '../../styles/uiClasses'
 
 type LoanFormProps = {
   form: LoanRequest
   sampleCodes: SampleCode[]
+  constraints: LoanConstraints
   isLoading: boolean
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onFormChange: (nextForm: LoanRequest) => void
 }
 
-function LoanForm({ form, sampleCodes, isLoading, onSubmit, onFormChange }: LoanFormProps) {
+function LoanForm({ form, sampleCodes, constraints, isLoading, onSubmit, onFormChange }: LoanFormProps) {
   return (
-    <form onSubmit={onSubmit} className="form">
-      <label>
+    <form onSubmit={onSubmit} noValidate className={ui.form}>
+      <label className={ui.label}>
         Personal Code
         <select
+          className={ui.control}
           value={form.personalCode}
           onChange={(e) => onFormChange({ ...form, personalCode: e.target.value })}
         >
@@ -29,30 +32,32 @@ function LoanForm({ form, sampleCodes, isLoading, onSubmit, onFormChange }: Loan
         </select>
       </label>
 
-      <label>
+      <label className={ui.label}>
         Loan Amount (EUR)
         <input
+          className={ui.control}
           type="number"
-          min={2000}
-          max={10000}
-          step={100}
+          min={constraints.minAmount}
+          max={constraints.maxAmount}
+          step={1}
           value={form.amount}
           onChange={(e) => onFormChange({ ...form, amount: Number(e.target.value) })}
         />
       </label>
 
-      <label>
+      <label className={ui.label}>
         Loan Period (months)
         <input
+          className={ui.control}
           type="number"
-          min={12}
-          max={60}
+          min={constraints.minPeriod}
+          max={constraints.maxPeriod}
           value={form.loanPeriod}
           onChange={(e) => onFormChange({ ...form, loanPeriod: Number(e.target.value) })}
         />
       </label>
 
-      <button type="submit" disabled={isLoading}>
+      <button type="submit" disabled={isLoading} className={ui.buttonPrimary}>
         {isLoading ? 'Checking...' : 'Get Decision'}
       </button>
     </form>

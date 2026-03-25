@@ -13,3 +13,10 @@ export type SampleCode = {
   personalCode: string
   label: string
 }
+
+export type LoanConstraints = {
+  minAmount: number
+  maxAmount: number
+  minPeriod: number
+  maxPeriod: number
+}
