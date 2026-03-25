@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { LoanRequest, LoanResponse, SampleCode } from './types/loan'
+import LoanForm from './components/LoanForm'
+import LoanResult from './components/LoanResult'
+import ErrorMessage from './components/ErrorMessage'
 
 function App() {
   const [form, setForm] = useState<LoanRequest>({
@@ -79,62 +82,18 @@ function App() {
         <h1>Loan Decision Demo</h1>
         <p className="subtitle">Simple front-end for the single API endpoint.</p>
 
-        <form onSubmit={onSubmit} className="form">
-          <label>
-            Personal Code
-            <select
-              value={form.personalCode}
-              onChange={(e) => setForm({ ...form, personalCode: e.target.value })}
-            >
-              <option value="" disabled>
-                Select a sample code
-              </option>
-              {sampleCodes.map((item) => (
-                <option key={item.personalCode} value={item.personalCode}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Loan Amount (EUR)
-            <input
-              type="number"
-              min={2000}
-              max={10000}
-              step={100}
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
-            />
-          </label>
-
-          <label>
-            Loan Period (months)
-            <input
-              type="number"
-              min={12}
-              max={60}
-              value={form.loanPeriod}
-              onChange={(e) => setForm({ ...form, loanPeriod: Number(e.target.value) })}
-            />
-          </label>
-
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? 'Checking...' : 'Get Decision'}
-          </button>
-        </form>
+        <LoanForm
+          form={form}
+          sampleCodes={sampleCodes}
+          isLoading={isLoading}
+          onSubmit={onSubmit}
+          onFormChange={setForm}
+        />
 
         <div className="endpoint">Endpoint: {endpoint}</div>
 
-        {result && (
-          <div className={`result ${result.isApproved ? 'approved' : 'rejected'}`}>
-            <div>Decision: {result.isApproved ? 'Approved' : 'Rejected'}</div>
-            <div>Approved Amount: {result.approvedAmount} EUR</div>
-          </div>
-        )}
-
-        {error && <div className="error">Error: {error}</div>}
+        <LoanResult result={result} />
+        <ErrorMessage message={error} />
       </section>
     </main>
   )
