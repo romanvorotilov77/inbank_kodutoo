@@ -23,6 +23,11 @@ lerna-debug.log*
 # .NET build artifacts
 /backend/bin/
 /backend/obj/
+/backend.Tests/bin/
+/backend.Tests/obj/
+
+# Test output
+/frontend/coverage/
 
 # Local environment variables
 .env.local
